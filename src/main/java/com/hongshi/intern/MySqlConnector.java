@@ -6,21 +6,22 @@ import java.util.Scanner;
 public class MySqlConnector {
     public static void connectMySql() {
         Scanner scanner = new Scanner(System.in);
-        System.out.println("Start connecting MySQL.");
+        System.out.println("Start connecting MySQL...");
         Connection conn;
 
-        System.out.print("Plz enter host: ");
+        System.out.print("Enter host: ");
         String host = scanner.nextLine();
-        System.out.print("Plz enter port: ");
+        System.out.print("Enter port: ");
         String port = scanner.nextLine();
-        System.out.print("Plz enter database name: ");
+        System.out.print("Enter database name: ");
         String database = scanner.nextLine();
+
         String url = "jdbc:mysql://" + host + ":" + port + "/" + database + "?autoReconnect=true&useSSL=false";
         String driver = "com.mysql.cj.jdbc.Driver";
 
-        System.out.print("Plz enter user name: ");
+        System.out.print("Enter user name: ");
         String userName = scanner.nextLine();
-        System.out.print("Plz enter password: ");
+        System.out.print("Enter password: ");
         String password = scanner.nextLine();
 
         Statement stmt = null;
@@ -32,34 +33,8 @@ public class MySqlConnector {
             conn = DriverManager.getConnection(url, userName, password);
             //c.发送sql语句，执行sql语句
             stmt = conn.createStatement();
-            System.out.println("connection successful!");
+            System.out.println("Connection successful!");
 
-//            //task1
-//            System.out.println("task 1");
-//            String sql = "SELECT * FROM t_area WHERE area_code = '310114103035'";
-//            //查询的时候用executeQuery
-//            rs = stmt.executeQuery(sql);
-//            while (rs.next()) {
-//                int id = rs.getInt("id");
-//                String area_code = rs.getString("area_code");
-//                String area_name = rs.getString("area_name");
-//                int level = rs.getInt("level");
-//                String parent_code = rs.getString("parent_code");
-//                String code2 = rs.getString("code2");
-//                String ctime = rs.getString("ctime");
-//                printRow(id, area_code, area_name, level, parent_code, code2, ctime);
-//            }
-//
-//            //task2
-//            System.out.println("task 2");
-//            sql = "SELECT * FROM t_area WHERE area_name LIKE '%社区%'";
-//            rs = stmt.executeQuery(sql);
-//            int numCommunity = 0;
-//            while (rs.next()) {
-//                ++numCommunity;
-//            }
-//            System.out.println(numCommunity);
-//
 //            //task3
 //            System.out.println("task 3");
 //            sql = "INSERT INTO t_area (area_code, area_name, level, parent_code, code2, ctime) VALUES ('55555', 'test', 0, '22222', '0', '2020-06-15')";
@@ -90,19 +65,22 @@ public class MySqlConnector {
             String tableName = "";
             String columnNames = "";
             String restriction = "";
+            int numResultRow = 0;
             while (choice != 0) {
-                System.out.println("1: enter a command in one line");
-                System.out.println("2: view database table content");
-                System.out.println("3: view Excel file content");
-                System.out.println("4: write database table to Excel file");
-                System.out.println("5: write Excel file to database table");
-                System.out.println("0: quit");
-                System.out.print("Plz choose your operation:");
+                System.out.println("----------------------------------------");
+                System.out.println("1: Enter a command in one line");
+                System.out.println("2: View database table content");
+                System.out.println("3: View Excel file content");
+                System.out.println("4: Write database table to Excel file");
+                System.out.println("5: Write Excel file to database table");
+                System.out.println("0: Quit");
+                System.out.print("Choose your operation:");
                 choice = scanner.nextByte();
                 scanner.nextLine();
 
                 switch (choice) {
                     case 1:
+                        System.out.println("----------------------------------------");
                         System.out.println("enter your command(in one single line): ");
                         sql = scanner.nextLine();
 
@@ -117,6 +95,7 @@ public class MySqlConnector {
                         break;
 
                     case 2:
+                        System.out.println("----------------------------------------");
                         System.out.print("enter table name: ");
                         tableName = scanner.nextLine();
                         System.out.print("enter column names(separated by commas): ");
@@ -126,16 +105,36 @@ public class MySqlConnector {
                         sql = "SELECT " + columnNames + " FROM " + tableName + restriction;
 
                         try {
+                            //查询的时候用executeQuery
                             rs = stmt.executeQuery(sql);
                         } catch (SQLException throwables) {
                             throwables.printStackTrace();
                         }
+
+                        numResultRow = 0;
+                        while (rs.next()) {
+                            ++numResultRow;
+                        }
                         printTable(rs);
+                        System.out.println("Number of results: " + numResultRow);
+                        break;
+
+                    case 3:
+                        System.out.println("----------------------------------------");
+                        break;
+
+                    case 4:
+                        System.out.println("----------------------------------------");
+                        break;
+
+                    case 5:
+                        System.out.println("----------------------------------------");
                         break;
 
                     case 0:
                         break;
                     default:
+                        System.out.println("----------------------------------------");
                         System.out.println("Invalid choice, plz enter correct choice");
                 }
             }

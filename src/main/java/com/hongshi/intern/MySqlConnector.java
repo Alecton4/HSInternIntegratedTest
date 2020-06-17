@@ -32,6 +32,7 @@ public class MySqlConnector {
         database = "hs_test";
         userName = "root";
         password = "10030330";
+        url = "jdbc:mysql://" + host + ":" + port + "/" + database + "?autoReconnect=true&useSSL=false";
 
         Statement stmt = null;
         ResultSet rs = null;
@@ -44,14 +45,17 @@ public class MySqlConnector {
             stmt = conn.createStatement();
             System.out.println("Connection successful!");
 
+            //variables needed
             byte choice = -1;
             String sql = "";
             String tableName = "";
             String columnNames = "";
+            String values = "";
             String restriction = "";
             int numResultRow = 0;
             String filePath = "";
             List<Map<String, String>> fileContent;
+
             while (choice != 0) {
                 System.out.println("----------------------------------------");
                 System.out.println("1: Enter a command in one line");
@@ -74,7 +78,7 @@ public class MySqlConnector {
                             //增删改时用executeUpdate
                             int count = stmt.executeUpdate(sql);
                             if (count > 0) {
-                                System.out.println("operation success");
+                                System.out.println("Operation success");
                             }
                         } catch (SQLException throwables) {
                             throwables.printStackTrace();
@@ -148,18 +152,27 @@ public class MySqlConnector {
 
                         //for test
                         filePath = "D:\\yzhao\\Documents\\tmp\\t_area_part.xlsx";
-                        tableName = "t_area";
+                        tableName = "t_area_test";
 
                         fileContent = ExcelFileOperator.excelToList(filePath);
-
                         if (fileContent != null) {
+                            System.out.println("Writing to table...");
                             //遍历解析出来的list
                             for (Map<String, String> map : fileContent) {
+                                columnNames = "";
+                                values = "";
                                 for (Map.Entry<String, String> entry : map.entrySet()) {
-                                    System.out.print(entry.getKey() + ": " + entry.getValue() + ", ");
+                                    if (!entry.getKey().equals("ctime")) {
+                                        columnNames += "," + entry.getKey();
+                                        values += ",\'" + entry.getValue() + "\'";
+                                    }
                                 }
+                                columnNames = columnNames.substring(1, columnNames.length());
+                                values = values.substring(1, values.length());
+                                sql = "INSERT INTO " + tableName + " (" + columnNames + ") VALUES (" + values + ")";
+                                stmt.executeUpdate(sql);
                             }
-                            System.out.println("Number of rows: " + fileContent.size());
+                            System.out.println("Operation successful!");
                         } else {
                             System.out.println("Invalid content!");
                         }

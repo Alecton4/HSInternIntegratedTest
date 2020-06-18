@@ -2,17 +2,12 @@ package com.hongshi.intern;
 
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 public class ExcelFileOperator {
@@ -37,7 +32,7 @@ public class ExcelFileOperator {
             //obtain column names
             String[] columnNames = new String[numCol];
             for (int i = 0; i < numCol; ++i) {
-                columnNames[i] = (String) getCellFormatValue(row.getCell(i));
+                columnNames[i] = (String) getCellValue(row.getCell(i));
             }
 
             for (int i = 1; i < numRow; i++) {
@@ -45,7 +40,7 @@ public class ExcelFileOperator {
                 row = sheet.getRow(i);
                 if (row != null) {
                     for (int j = 0; j < numCol; j++) {
-                        cellData = (String) getCellFormatValue(row.getCell(j));
+                        cellData = (String) getCellValue(row.getCell(j));
                         map.put(columnNames[j], cellData);
                     }
                 } else {
@@ -97,7 +92,7 @@ public class ExcelFileOperator {
         return null;
     }
 
-    public static Object getCellFormatValue(Cell cell) {
+    public static Object getCellValue(Cell cell) {
         Object cellValue;
         if (cell != null) {
             //判断cell类型
@@ -130,36 +125,77 @@ public class ExcelFileOperator {
         return cellValue;
     }
 
-    public static String convertCellValueToString(Cell cell) {
-        if (cell == null) {
-            return null;
-        }
-        String returnValue = null;
-        switch (cell.getCellType()) {
-            case NUMERIC:   //数字
-                Double doubleValue = cell.getNumericCellValue();
+//    public static String convertCellValueToString(Cell cell) {
+//        if (cell == null) {
+//            return null;
+//        }
+//        String returnValue = null;
+//        switch (cell.getCellType()) {
+//            case NUMERIC:   //数字
+//                Double doubleValue = cell.getNumericCellValue();
+//
+//                // 格式化科学计数法，取一位整数
+//                DecimalFormat df = new DecimalFormat("0");
+//                returnValue = df.format(doubleValue);
+//                break;
+//            case STRING:    //字符串
+//                returnValue = cell.getStringCellValue();
+//                break;
+//            case BOOLEAN:   //布尔
+//                Boolean booleanValue = cell.getBooleanCellValue();
+//                returnValue = booleanValue.toString();
+//                break;
+//            case BLANK:     // 空值
+//                break;
+//            case FORMULA:   // 公式
+//                returnValue = cell.getCellFormula();
+//                break;
+//            case ERROR:     // 故障
+//                break;
+//            default:
+//                break;
+//        }
+//        return returnValue;
+//    }
 
-                // 格式化科学计数法，取一位整数
-                DecimalFormat df = new DecimalFormat("0");
-                returnValue = df.format(doubleValue);
-                break;
-            case STRING:    //字符串
-                returnValue = cell.getStringCellValue();
-                break;
-            case BOOLEAN:   //布尔
-                Boolean booleanValue = cell.getBooleanCellValue();
-                returnValue = booleanValue.toString();
-                break;
-            case BLANK:     // 空值
-                break;
-            case FORMULA:   // 公式
-                returnValue = cell.getCellFormula();
-                break;
-            case ERROR:     // 故障
-                break;
-            default:
-                break;
+    public static void exportExcel(List<String> list, String filePath){
+        try {
+            int numRecords = list.size();
+            Workbook wb = new SXSSFWorkbook();    //.xlsx
+//            Workbook wb = new HSSFWorkbook();    //.xls
+            FileOutputStream fileOut = new FileOutputStream(filePath);
+
+            int numSheets = 1;
+            if (numRecords>50000) {
+                numSheets = (numRecords%50000)==0?(numRecords/50000):((numRecords/50000)+1);
+            }
+            System.out.println("Start writing to excel file，num of records："+numRecords+", num of sheets："+numSheets);
+            int rowNums = 0;
+            int listIndex = 0;
+            for (int i = 1; i <= numSheets; i++) {
+                Sheet sheet = wb.createSheet();
+                sheet.setDefaultColumnWidth(25);
+                if(i==numSheets){
+                    rowNums = numRecords-((numSheets-1)*50000);
+                    for (int j = 0; j < rowNums; j++) {
+                        Row row = sheet.createRow(j);
+                        row.createCell(0).setCellValue(list.get(j+listIndex));
+                    }
+                }else{
+                    for (int j = 0; j < 50000; j++) {
+                        Row row = sheet.createRow(j);
+                        row.createCell(0).setCellValue(list.get(j+listIndex));
+                    }
+                }
+                listIndex=listIndex+(i*50000);
+                System.out.println(i+"th sheet writing successfully...");
+            }
+            wb.write(fileOut);
+            fileOut.close();
+            wb.close();
+            System.out.println("Writing successful!");
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        return returnValue;
     }
 }

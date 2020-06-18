@@ -1,6 +1,7 @@
 package com.hongshi.intern;
 
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -17,10 +18,6 @@ public class MySqlConnector {
         String port = scanner.nextLine();
         System.out.print("Enter database name: ");
         String database = scanner.nextLine();
-
-        String url = "jdbc:mysql://" + host + ":" + port + "/" + database + "?autoReconnect=true&useSSL=false";
-        String driver = "com.mysql.cj.jdbc.Driver";
-
         System.out.print("Enter user name: ");
         String userName = scanner.nextLine();
         System.out.print("Enter password: ");
@@ -32,8 +29,9 @@ public class MySqlConnector {
         database = "hs_test";
         userName = "root";
         password = "10030330";
-        url = "jdbc:mysql://" + host + ":" + port + "/" + database + "?autoReconnect=true&useSSL=false";
 
+        String url = "jdbc:mysql://" + host + ":" + port + "/" + database + "?autoReconnect=true&useSSL=false";
+        String driver = "com.mysql.cj.jdbc.Driver";
         Statement stmt = null;
         ResultSet rs = null;
         try {
@@ -47,13 +45,13 @@ public class MySqlConnector {
 
             //variables needed
             byte choice = -1;
-            String sql = "";
-            String tableName = "";
-            String columnNames = "";
-            String values = "";
-            String restriction = "";
-            int numResultRow = 0;
-            String filePath = "";
+            String sql;
+            String tableName;
+            String columnNames;
+            String values;
+            String restriction;
+            int numResultRow;
+            String filePath;
             List<Map<String, String>> fileContent;
 
             while (choice != 0) {
@@ -75,8 +73,7 @@ public class MySqlConnector {
                         sql = scanner.nextLine();
 
                         try {
-                            //增删改时用executeUpdate
-                            int count = stmt.executeUpdate(sql);
+                            int count = stmt.executeUpdate(sql);    //增删改时用executeUpdate
                             if (count > 0) {
                                 System.out.println("Operation success");
                             }
@@ -94,11 +91,16 @@ public class MySqlConnector {
                         columnNames = scanner.nextLine();
                         System.out.print("Enter restrictions(in one single line, with \"WHERE\"): ");
                         restriction = scanner.nextLine();
+
+                        //for test
+                        tableName = "t_area";
+                        columnNames = "*";
+                        restriction = "";
+
                         sql = "SELECT " + columnNames + " FROM " + tableName + restriction;
 
                         try {
-                            //查询的时候用executeQuery
-                            rs = stmt.executeQuery(sql);
+                            rs = stmt.executeQuery(sql);    //查询的时候用executeQuery
                         } catch (SQLException throwables) {
                             throwables.printStackTrace();
                         }
@@ -115,7 +117,10 @@ public class MySqlConnector {
                         System.out.println("----------------------------------------");
                         System.out.print("Enter Excel file path: ");
                         filePath = scanner.nextLine();
+
+                        //for test
                         filePath = "D:\\yzhao\\Documents\\tmp\\t_area_part.xlsx";
+
                         fileContent = ExcelFileOperator.excelToList(filePath);
                         ExcelFileOperator.printContent(fileContent);
                         break;
@@ -128,18 +133,27 @@ public class MySqlConnector {
                         columnNames = scanner.nextLine();
                         System.out.print("Enter restrictions(in one single line, with \"WHERE\"): ");
                         restriction = scanner.nextLine();
-                        sql = "SELECT " + columnNames + " FROM " + tableName + restriction;
+                        System.out.print("Enter Excel file path: ");
+                        filePath = scanner.nextLine();
 
+                        //for test
+                        tableName = "t_area";
+                        columnNames = "*";
+                        restriction = "";
+                        filePath = "D:\\yzhao\\Documents\\tmp\\output_test.xlsx";
+
+                        sql = "SELECT " + columnNames + " FROM " + tableName + restriction;
                         try {
-                            //查询的时候用executeQuery
-                            rs = stmt.executeQuery(sql);
+                            rs = stmt.executeQuery(sql);    //查询的时候用executeQuery
                         } catch (SQLException throwables) {
                             throwables.printStackTrace();
                         }
-                        numResultRow = 0;
+
+                        List<String> strs = new ArrayList<String>();
                         while (rs.next()) {
-                            ++numResultRow;
+                            strs.add(rs.getString(1));
                         }
+                        ExcelFileOperator.exportExcel(strs, filePath);
 
                         break;
 
@@ -157,6 +171,7 @@ public class MySqlConnector {
                         fileContent = ExcelFileOperator.excelToList(filePath);
                         if (fileContent != null) {
                             System.out.println("Writing to table...");
+
                             //遍历解析出来的list
                             for (Map<String, String> map : fileContent) {
                                 columnNames = "";
@@ -166,9 +181,11 @@ public class MySqlConnector {
                                         columnNames += "," + entry.getKey();
                                         values += ",\'" + entry.getValue() + "\'";
                                     }
+//                                    columnNames += "," + entry.getKey();
+//                                    values += ",\'" + entry.getValue() + "\'";
                                 }
-                                columnNames = columnNames.substring(1, columnNames.length());
-                                values = values.substring(1, values.length());
+                                columnNames = columnNames.substring(1);
+                                values = values.substring(1);
                                 sql = "INSERT INTO " + tableName + " (" + columnNames + ") VALUES (" + values + ")";
                                 stmt.executeUpdate(sql);
                             }

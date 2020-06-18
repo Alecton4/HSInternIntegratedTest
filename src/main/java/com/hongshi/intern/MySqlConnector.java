@@ -4,24 +4,22 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 
 public class MySqlConnector {
     public static void connectMySql() {
-        Scanner scanner = new Scanner(System.in);
         System.out.println("Start connecting MySQL...");
         Connection conn;
 
         System.out.print("Enter host: ");
-        String host = scanner.nextLine();
+        String host = App.scanner.nextLine();
         System.out.print("Enter port: ");
-        String port = scanner.nextLine();
+        String port = App.scanner.nextLine();
         System.out.print("Enter database name: ");
-        String database = scanner.nextLine();
+        String database = App.scanner.nextLine();
         System.out.print("Enter user name: ");
-        String userName = scanner.nextLine();
+        String userName = App.scanner.nextLine();
         System.out.print("Enter password: ");
-        String password = scanner.nextLine();
+        String password = App.scanner.nextLine();
 
         //for test
         host = "localhost";
@@ -63,14 +61,14 @@ public class MySqlConnector {
                 System.out.println("5: Write Excel file to database table");
                 System.out.println("0: Quit");
                 System.out.print("Choose your operation: ");
-                choice = scanner.nextByte();
-                scanner.nextLine();
+                choice = App.scanner.nextByte();
+                App.scanner.nextLine();
 
                 switch (choice) {
                     case 1:
                         System.out.println("----------------------------------------");
                         System.out.println("enter your command(in one single line): ");
-                        sql = scanner.nextLine();
+                        sql = App.scanner.nextLine();
 
                         try {
                             int count = stmt.executeUpdate(sql);    //增删改时用executeUpdate
@@ -86,11 +84,11 @@ public class MySqlConnector {
                     case 2:
                         System.out.println("----------------------------------------");
                         System.out.print("Enter table name: ");
-                        tableName = scanner.nextLine();
+                        tableName = App.scanner.nextLine();
                         System.out.print("Enter column names(separated by commas): ");
-                        columnNames = scanner.nextLine();
+                        columnNames = App.scanner.nextLine();
                         System.out.print("Enter restrictions(in one single line, with \"WHERE\"): ");
-                        restriction = scanner.nextLine();
+                        restriction = App.scanner.nextLine();
 
                         //for test
                         tableName = "t_area";
@@ -116,7 +114,7 @@ public class MySqlConnector {
                     case 3:
                         System.out.println("----------------------------------------");
                         System.out.print("Enter Excel file path: ");
-                        filePath = scanner.nextLine();
+                        filePath = App.scanner.nextLine();
 
                         //for test
                         filePath = "D:\\yzhao\\Documents\\tmp\\t_area_part.xlsx";
@@ -128,13 +126,13 @@ public class MySqlConnector {
                     case 4:
                         System.out.println("----------------------------------------");
                         System.out.print("Enter table name: ");
-                        tableName = scanner.nextLine();
+                        tableName = App.scanner.nextLine();
                         System.out.print("Enter column names(separated by commas): ");
-                        columnNames = scanner.nextLine();
+                        columnNames = App.scanner.nextLine();
                         System.out.print("Enter restrictions(in one single line, with \"WHERE\"): ");
-                        restriction = scanner.nextLine();
+                        restriction = App.scanner.nextLine();
                         System.out.print("Enter Excel file path: ");
-                        filePath = scanner.nextLine();
+                        filePath = App.scanner.nextLine();
 
                         //for test
                         tableName = "t_area";
@@ -160,9 +158,9 @@ public class MySqlConnector {
                     case 5:
                         System.out.println("----------------------------------------");
                         System.out.print("Enter Excel file path: ");
-                        filePath = scanner.nextLine();
+                        filePath = App.scanner.nextLine();
                         System.out.print("Enter table you want to write to: ");
-                        tableName = scanner.nextLine();
+                        tableName = App.scanner.nextLine();
 
                         //for test
                         filePath = "D:\\yzhao\\Documents\\tmp\\t_area_part.xlsx";
@@ -196,13 +194,15 @@ public class MySqlConnector {
                         break;
 
                     case 0:
+                        System.out.println("----------------------------------------");
+                        System.out.println("QUIT");
                         break;
                     default:
                         System.out.println("----------------------------------------");
-                        System.out.println("Invalid choice, plz enter correct choice");
+                        System.out.println("Invalid choice!");
                 }
             }
-            scanner.close();
+//            scanner.close();
             if (rs != null) rs.close();
             if (stmt != null) stmt.close();
             if (conn != null) conn.close();

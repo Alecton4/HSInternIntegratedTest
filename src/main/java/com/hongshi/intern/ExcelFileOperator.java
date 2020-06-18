@@ -6,8 +6,10 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.*;
-import java.text.DecimalFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 public class ExcelFileOperator {
@@ -158,7 +160,7 @@ public class ExcelFileOperator {
 //        return returnValue;
 //    }
 
-    public static void exportExcel(List<String> list, String filePath){
+    public static void exportExcel(List<String> list, String filePath) {
         try {
             int numRecords = list.size();
             Workbook wb = new SXSSFWorkbook();    //.xlsx
@@ -166,29 +168,29 @@ public class ExcelFileOperator {
             FileOutputStream fileOut = new FileOutputStream(filePath);
 
             int numSheets = 1;
-            if (numRecords>50000) {
-                numSheets = (numRecords%50000)==0?(numRecords/50000):((numRecords/50000)+1);
+            if (numRecords > 50000) {
+                numSheets = (numRecords % 50000) == 0 ? (numRecords / 50000) : ((numRecords / 50000) + 1);
             }
-            System.out.println("Start writing to excel file，num of records："+numRecords+", num of sheets："+numSheets);
+            System.out.println("Start writing to excel file，num of records：" + numRecords + ", num of sheets：" + numSheets);
             int rowNums = 0;
             int listIndex = 0;
             for (int i = 1; i <= numSheets; i++) {
                 Sheet sheet = wb.createSheet();
                 sheet.setDefaultColumnWidth(25);
-                if(i==numSheets){
-                    rowNums = numRecords-((numSheets-1)*50000);
+                if (i == numSheets) {
+                    rowNums = numRecords - ((numSheets - 1) * 50000);
                     for (int j = 0; j < rowNums; j++) {
                         Row row = sheet.createRow(j);
-                        row.createCell(0).setCellValue(list.get(j+listIndex));
+                        row.createCell(0).setCellValue(list.get(j + listIndex));
                     }
-                }else{
+                } else {
                     for (int j = 0; j < 50000; j++) {
                         Row row = sheet.createRow(j);
-                        row.createCell(0).setCellValue(list.get(j+listIndex));
+                        row.createCell(0).setCellValue(list.get(j + listIndex));
                     }
                 }
-                listIndex=listIndex+(i*50000);
-                System.out.println(i+"th sheet writing successfully...");
+                listIndex = listIndex + (i * 50000);
+                System.out.println(i + "th sheet writing successfully...");
             }
             wb.write(fileOut);
             fileOut.close();

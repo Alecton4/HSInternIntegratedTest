@@ -1,114 +1,274 @@
 package com.hongshi.intern;
 
 import java.sql.*;
-import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class MySqlConnector {
+
     public static void connectMySql() {
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("start connecting MySQL.");
-        Connection conn;
+        System.out.println("Start connecting MySQL...");
+        System.out.print("Enter host: ");
+        String host = App.scanner.nextLine();
+        System.out.print("Enter port: ");
+        String port = App.scanner.nextLine();
+        System.out.print("Enter database name: ");
+        String database = App.scanner.nextLine();
+        System.out.print("Enter user name: ");
+        String userName = App.scanner.nextLine();
+        System.out.print("Enter password: ");
+        String password = App.scanner.nextLine();
 
-        System.out.print("Plz enter host: ");
-        String host = scanner.nextLine();
-        System.out.print("Plz enter port: ");
-        String port = scanner.nextLine();
-        System.out.print("Plz enter database name: ");
-        String database = scanner.nextLine();
-        String url = "jdbc:mysql://" + host + ":" + port + "/" + database + "?autoReconnect=true&useSSL=false";
-        String driver = "com.mysql.cj.jdbc.Driver";
+        //for test
+        host = "localhost";
+        port = "3306";
+        database = "hs_test";
+        userName = "root";
+        password = "10030330";
 
-        System.out.print("Plz enter user name: ");
-        String userName = scanner.nextLine();
-        System.out.print("Plz enter password: ");
-        String password = scanner.nextLine();
+        // MySQL 8.0 以下版本 - JDBC 驱动名及数据库 URL
+//         final String JDBC_DRIVER = "com.mysql.jdbc.Driver";
+//         final String DB_URL = "jdbc:mysql://localhost:3306/RUNOOB";
 
-        Statement stmt = null;
+        // MySQL 8.0 以上版本 - JDBC 驱动名及数据库 URL
+        final String DRIVER = "com.mysql.cj.jdbc.Driver";
+        final String URL = "jdbc:mysql://" + host + ":" + port + "/" + database + "?autoReconnect=true&useSSL=false";
+
+        Connection conn = null;
+        Statement stmtForRS = null;
+        Statement stmtForRSMD = null;
         ResultSet rs = null;
-
+        ResultSetMetaData rsmd = null;
         try {
             //a.导入驱动，加载具体的驱动类
-            Class.forName(driver);
+            Class.forName(DRIVER);
             //b.与数据库建立连接
-            conn = DriverManager.getConnection(url, userName, password);
+            conn = DriverManager.getConnection(URL, userName, password);
             //c.发送sql语句，执行sql语句
-            stmt = conn.createStatement();
+            stmtForRS = conn.createStatement();
+            stmtForRSMD = conn.createStatement();
+            System.out.println("Connection successful!");
+            //variables needed
+            byte choice = -1;
+            String sql;
+            String tableName;
+            String columnNames;
+            String values;
+            String restriction;
+            List<Map<String, String>> tableContent = null;
+            String filePath;
+            List<Map<String, String>> fileContent = null;
 
-            //task1
-            System.out.println("task 1");
-            String sql = "SELECT * FROM t_area WHERE area_code = '310114103035'";
-            //查询的时候用executeQuery
-            rs = stmt.executeQuery(sql);
-            while (rs.next()) {
-                int id = rs.getInt("id");
-                String area_code = rs.getString("area_code");
-                String area_name = rs.getString("area_name");
-                int level = rs.getInt("level");
-                String parent_code = rs.getString("parent_code");
-                String code2 = rs.getString("code2");
-                String ctime = rs.getString("ctime");
-                printRow(id, area_code, area_name, level, parent_code, code2, ctime);
+            while (choice != 0) {
+                System.out.println("----------------------------------------");
+                System.out.println("1: Enter a command in one line");
+                System.out.println("2: View database table content");
+                System.out.println("3: View Excel file content");
+                System.out.println("4: Write database table to Excel file");
+                System.out.println("5: Write Excel file to database table");
+                System.out.println("0: Quit");
+                System.out.print("Choose your operation: ");
+                choice = App.scanner.nextByte();
+                App.scanner.nextLine();
+
+                switch (choice) {
+                    case 1:
+                        //finished
+                        System.out.println("----------------------------------------");
+                        System.out.println("enter your command(in one single line): ");
+                        sql = App.scanner.nextLine();
+
+                        try {
+                            int count = stmtForRS.executeUpdate(sql);    //增删改时用executeUpdate
+                            if (count > 0) {
+                                System.out.println("Operation success");
+                            }
+                        } catch (SQLException throwable) {
+                            throwable.printStackTrace();
+                        }
+
+                        break;
+
+                    case 2:
+                        //finished
+                        System.out.println("----------------------------------------");
+                        System.out.print("Enter table name: ");
+                        tableName = App.scanner.nextLine();
+                        System.out.print("Enter column names(separated by commas): ");
+                        columnNames = App.scanner.nextLine();
+                        System.out.print("Enter restrictions(in one single line, with \"WHERE\"): ");
+                        restriction = App.scanner.nextLine();
+
+                        //for test
+                        tableName = "t_area";
+                        columnNames = "*";
+                        restriction = "";
+
+                        sql = "SELECT " + columnNames + " FROM " + tableName + restriction;
+                        try {
+                            rs = stmtForRS.executeQuery(sql);    //查询的时候用executeQuery
+                            rsmd = stmtForRSMD.executeQuery(sql).getMetaData();
+                            printTable(rs, rsmd);
+                        } catch (SQLException throwables) {
+                            throwables.printStackTrace();
+                        }
+
+                        break;
+
+                    case 3:
+                        //finished but class related to Excel needs optimizing
+                        System.out.println("----------------------------------------");
+                        System.out.print("Enter Excel file path: ");
+                        filePath = App.scanner.nextLine();
+
+                        //for test
+                        filePath = "D:\\yzhao\\Documents\\tmp\\t_area_part.xlsx";
+
+                        fileContent = ExcelFileOperator.excelToList(filePath);
+                        ExcelFileOperator.printFile(fileContent);
+                        break;
+
+                    case 4:
+                        //finished but class related to Excel needs optimizing
+                        System.out.println("----------------------------------------");
+                        System.out.print("Enter table name: ");
+                        tableName = App.scanner.nextLine();
+                        System.out.print("Enter column names(separated by commas): ");
+                        columnNames = App.scanner.nextLine();
+                        System.out.print("Enter restrictions(in one single line, with \"WHERE\"): ");
+                        restriction = App.scanner.nextLine();
+                        System.out.print("Enter Excel file path: ");
+                        filePath = App.scanner.nextLine();
+
+                        //for test
+                        tableName = "t_area";
+                        columnNames = "*";
+                        restriction = "";
+                        filePath = "D:\\yzhao\\Documents\\tmp\\output_test.xlsx";
+
+                        sql = "SELECT " + columnNames + " FROM " + tableName + restriction;
+                        try {
+                            rs = stmtForRS.executeQuery(sql);    //查询的时候用executeQuery
+                            rsmd = stmtForRSMD.executeQuery(sql).getMetaData();
+                            tableContent = tableToList(rs, rsmd);
+                        } catch (SQLException throwables) {
+                            throwables.printStackTrace();
+                        }
+                        ExcelFileOperator.exportExcel(tableContent, filePath);
+
+                        break;
+
+                    case 5:
+                        //TODO
+                        System.out.println("----------------------------------------");
+                        System.out.print("Enter Excel file path: ");
+                        filePath = App.scanner.nextLine();
+                        System.out.print("Enter table you want to write to: ");
+                        tableName = App.scanner.nextLine();
+
+                        //for test
+                        filePath = "D:\\yzhao\\Documents\\tmp\\t_area_part.xlsx";
+                        tableName = "t_area_test";
+
+                        fileContent = ExcelFileOperator.excelToList(filePath);
+                        if (fileContent != null) {
+                            System.out.println("Writing to table...");
+
+                            for (Map<String, String> map : fileContent) {
+                                columnNames = "";
+                                values = "";
+                                for (Map.Entry<String, String> entry : map.entrySet()) {
+                                        columnNames += "," + entry.getKey();
+                                        values += ",\'" + entry.getValue() + "\'";
+                                }
+                                columnNames = columnNames.substring(1);
+                                values = values.substring(1);
+                                sql = "INSERT INTO " + tableName + " (" + columnNames + ") VALUES (" + values + ")";
+                                stmtForRS.executeUpdate(sql);
+                            }
+                            System.out.println("Operation successful!");
+                        } else {
+                            System.out.println("Invalid content!");
+                        }
+                        break;
+
+                    case 0:
+                        System.out.println("----------------------------------------");
+                        System.out.println("QUIT");
+                        break;
+                    default:
+                        System.out.println("----------------------------------------");
+                        System.out.println("Invalid choice!");
+                }
             }
+            if (rs != null) rs.close();
+            if (stmtForRS != null) stmtForRS.close();
+            if (stmtForRSMD != null) stmtForRSMD.close();
+            if (conn != null) conn.close();
 
-            //task2
-            System.out.println("task 2");
-            sql = "SELECT * FROM t_area WHERE area_name LIKE '%社区%'";
-            rs = stmt.executeQuery(sql);
-            int numCommunity = 0;
-            while (rs.next()) {
-                ++numCommunity;
-            }
-            System.out.println(numCommunity);
-
-            //task3
-            System.out.println("task 3");
-            sql = "INSERT INTO t_area (area_code, area_name, level, parent_code, code2, ctime) VALUES ('55555', 'test', 0, '22222', '0', '2020-06-15')";
-            //增删改时用executeUpdate
-            int count = stmt.executeUpdate(sql);
-            if (count > 0) {
-                System.out.println("success！");
-            }
-
-            //task4
-            System.out.println("task 4");
-            sql = "UPDATE t_area SET area_name = '深圳虹识测试' WHERE area_name = 'test'";
-            count = stmt.executeUpdate(sql);
-            if (count > 0) {
-                System.out.println("success！");
-            }
-
-            //task5
-            System.out.println("task 5");
-            sql = "DELETE FROM t_area WHERE area_name = '深圳虹识测试'";
-            count = stmt.executeUpdate(sql);
-            if (count > 0) {
-                System.out.println("success！");
-            }
-
-            // close
-            rs.close();
-            stmt.close();
-            conn.close();
+        } catch (SQLException se) {
+            // 处理 JDBC 错误
+            se.printStackTrace();
         } catch (Exception e) {
+            // 处理 Class.forName 错误
             e.printStackTrace();
         } finally {
+            //close resources
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException se) {
+                    se.printStackTrace();
+                }
+            }
+            if (stmtForRS != null) {
+                try {
+                    stmtForRS.close();
+                } catch (SQLException se2) {
+                }//ignore
+            }
             if (rs != null) {
                 try {
                     rs.close();
                 } catch (SQLException sqlEx) {
                 } // ignore
             }
-
-            if (stmt != null) {
-                try {
-                    stmt.close();
-                } catch (SQLException sqlEx) {
-                } // ignore
-            }
         }
     }
 
-    public static void printRow(int id, String area_code, String area_name, int level, String parent_code, String code2, String ctime) {
-        System.out.println("id = " + id + ", 地区码 = " + area_code + ", 地区名称 = " + area_name + ", 级别 = " + level + ", 上级码 = " + parent_code + ", 城乡区别 = " + code2 + ", 创建时间 = " + ctime);
+    public static List<Map<String, String>> tableToList(ResultSet rs, ResultSetMetaData rsmd) {
+        try {
+            List<Map<String, String>> tableContent = new ArrayList<Map<String, String>>();
+            int numCol = rsmd.getColumnCount();
+
+            while (rs.next()) {
+                Map<String, String> map = new LinkedHashMap<String, String>();
+                for (int i = 0; i < numCol; i++) {
+                    map.put(rsmd.getColumnName(i+1), rs.getString(i+1));
+                }
+                tableContent.add(map);
+            }
+            return tableContent;
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+        return null;
+    }
+
+    public static void printTable(ResultSet rs, ResultSetMetaData rsmd){
+        List<Map<String, String>> tableContent = tableToList(rs, rsmd);
+        if (tableContent != null){
+            for (Map<String, String> map : tableContent) {
+                for (Map.Entry<String, String> entry : map.entrySet()) {
+                    System.out.print(entry.getKey() + ": " + entry.getValue() + ", ");
+                }
+                System.out.println();
+            }
+            System.out.println("Number of rows: " + tableContent.size());
+        }else {
+            System.out.println("Invalid content!");
+        }
     }
 }

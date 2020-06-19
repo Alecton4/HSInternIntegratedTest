@@ -6,6 +6,8 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.*;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -13,6 +15,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class ExcelFileOperator {
+
     public static List<Map<String, String>> excelToList(String filePath) {
         Workbook wb = readExcel(filePath);
         Sheet sheet;
@@ -21,20 +24,17 @@ public class ExcelFileOperator {
         String cellData;
 
         if (wb != null) {
-            //用来存放表中数据
             fileContent = new ArrayList<Map<String, String>>();
-            //获取第一个sheet
+            //obtain num of rows
             sheet = wb.getSheetAt(0);
-            //获取最大行数
             int numRow = sheet.getPhysicalNumberOfRows();
-            //获取第一行
+            //obtain num of columns
             row = sheet.getRow(0);
-            //获取最大列数
             int numCol = row.getPhysicalNumberOfCells();
             //obtain column names
             String[] columnNames = new String[numCol];
             for (int i = 0; i < numCol; ++i) {
-                columnNames[i] = (String) getCellValue(row.getCell(i));
+                columnNames[i] = cellValueToString(row.getCell(i));
             }
 
             for (int i = 1; i < numRow; i++) {
@@ -42,7 +42,7 @@ public class ExcelFileOperator {
                 row = sheet.getRow(i);
                 if (row != null) {
                     for (int j = 0; j < numCol; j++) {
-                        cellData = (String) getCellValue(row.getCell(j));
+                        cellData = cellValueToString(row.getCell(j));
                         map.put(columnNames[j], cellData);
                     }
                 } else {
@@ -54,7 +54,7 @@ public class ExcelFileOperator {
         return fileContent;
     }
 
-    public static void printContent(List<Map<String, String>> fileContent) {
+    public static void printFile(List<Map<String, String>> fileContent) {
         if (fileContent != null) {
             for (Map<String, String> map : fileContent) {
                 for (Entry<String, String> entry : map.entrySet()) {
@@ -68,8 +68,7 @@ public class ExcelFileOperator {
         }
     }
 
-    //读取excel
-    public static Workbook readExcel(String filePath) {
+    private static Workbook readExcel(String filePath) {
         if (filePath == null) {
             return null;
         }
@@ -82,9 +81,8 @@ public class ExcelFileOperator {
             } else if (".xlsx".equals(extString)) {
                 return new XSSFWorkbook(is);
             } else {
-                return null;
+                throw new IOException("Unsupported file type!");
             }
-
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -93,104 +91,101 @@ public class ExcelFileOperator {
         return null;
     }
 
-    public static Object getCellValue(Cell cell) {
-        Object cellValue;
-        if (cell != null) {
-            //判断cell类型
-            switch (cell.getCellType()) {
-                case NUMERIC: {
+    private static String cellValueToString(Cell cell) {
+        String cellValue = null;
+        switch (cell.getCellType()) {
+            case NUMERIC:
+                if (DateUtil.isCellDateFormatted(cell)) {
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");//日期格式yyyy-mm-dd
+                    cellValue = sdf.format(cell.getDateCellValue()); //日期型
+                } else {
+                    DecimalFormat df = new DecimalFormat("0");//数字格式，防止长数字成为科学计数法形式，或者int变为double形式
+                    cellValue = df.format(cell.getNumericCellValue()); //数字型
+                }
+                break;
+            case STRING: //文本类型
+                cellValue = cell.getStringCellValue();
+                break;
+            case BOOLEAN: //布尔型
+                cellValue = String.valueOf(cell.getBooleanCellValue());
+                break;
+            case BLANK: //空白
+                cellValue = cell.getStringCellValue();
+                break;
+            case ERROR: //错误
+                cellValue = "Error";
+                break;
+            case FORMULA: //公式
+                try {
+                    cellValue = String.valueOf(cell.getStringCellValue());
+                } catch (IllegalStateException e) {
                     cellValue = String.valueOf(cell.getNumericCellValue());
-                    break;
                 }
-                case FORMULA: {
-                    //判断cell是否为日期格式
-                    if (DateUtil.isCellDateFormatted(cell)) {
-                        //转换为日期格式YYYY-mm-dd
-                        cellValue = cell.getDateCellValue();
-                    } else {
-                        //数字
-                        cellValue = String.valueOf(cell.getNumericCellValue());
-                    }
-                    break;
-                }
-                case STRING: {
-                    cellValue = cell.getRichStringCellValue().getString();
-                    break;
-                }
-                default:
-                    cellValue = "";
-            }
-        } else {
-            cellValue = "";
+                break;
+            default:
+                cellValue = cell.getRichStringCellValue() == null ? null : cell.getRichStringCellValue().toString();
         }
         return cellValue;
     }
 
-//    public static String convertCellValueToString(Cell cell) {
-//        if (cell == null) {
-//            return null;
-//        }
-//        String returnValue = null;
-//        switch (cell.getCellType()) {
-//            case NUMERIC:   //数字
-//                Double doubleValue = cell.getNumericCellValue();
-//
-//                // 格式化科学计数法，取一位整数
-//                DecimalFormat df = new DecimalFormat("0");
-//                returnValue = df.format(doubleValue);
-//                break;
-//            case STRING:    //字符串
-//                returnValue = cell.getStringCellValue();
-//                break;
-//            case BOOLEAN:   //布尔
-//                Boolean booleanValue = cell.getBooleanCellValue();
-//                returnValue = booleanValue.toString();
-//                break;
-//            case BLANK:     // 空值
-//                break;
-//            case FORMULA:   // 公式
-//                returnValue = cell.getCellFormula();
-//                break;
-//            case ERROR:     // 故障
-//                break;
-//            default:
-//                break;
-//        }
-//        return returnValue;
-//    }
-
-    public static void exportExcel(List<String> list, String filePath) {
+    public static void exportExcel(List<Map<String, String>> tableContent, String filePath) {
         try {
-            int numRecords = list.size();
-            Workbook wb = new SXSSFWorkbook();    //.xlsx
-//            Workbook wb = new HSSFWorkbook();    //.xls
+            String extString = filePath.substring(filePath.lastIndexOf("."));
+            Workbook wb = null;
+            if (".xls".equals(extString)) {
+                wb = new HSSFWorkbook();    //.xls
+            } else if (".xlsx".equals(extString)) {
+                wb = new SXSSFWorkbook();    //.xlsx
+            } else {
+                throw new IOException("Unsupported file type!");
+            }
             FileOutputStream fileOut = new FileOutputStream(filePath);
 
+            int numRecords = tableContent.size();
             int numSheets = 1;
-            if (numRecords > 50000) {
-                numSheets = (numRecords % 50000) == 0 ? (numRecords / 50000) : ((numRecords / 50000) + 1);
-            }
+//            if (numRecords > 50000) {
+//                numSheets = (numRecords % 50000) == 0 ? (numRecords / 50000) : ((numRecords / 50000) + 1);
+//            }
             System.out.println("Start writing to excel file，num of records：" + numRecords + ", num of sheets：" + numSheets);
-            int rowNums = 0;
-            int listIndex = 0;
-            for (int i = 1; i <= numSheets; i++) {
-                Sheet sheet = wb.createSheet();
-                sheet.setDefaultColumnWidth(25);
-                if (i == numSheets) {
-                    rowNums = numRecords - ((numSheets - 1) * 50000);
-                    for (int j = 0; j < rowNums; j++) {
-                        Row row = sheet.createRow(j);
-                        row.createCell(0).setCellValue(list.get(j + listIndex));
+
+//            int rowNums = 0;
+//            int listIndex = 0;
+//            for (int i = 0; i <= numSheets; i++) {
+//                Sheet sheet = wb.createSheet();
+//                sheet.setDefaultColumnWidth(16);
+//                if (i == numSheets) {
+//                    rowNums = numRecords - ((numSheets - 1) * 50000);
+//                    for (int j = 0; j < rowNums; j++) {
+//                        Row row = sheet.createRow(j);
+//                        row.createCell(0).setCellValue(tableContent.get(i).entrySet());
+//                    }
+//                } else {
+//                    for (int j = 0; j < 50000; j++) {
+//                        Row row = sheet.createRow(j);
+//                        row.createCell(0).setCellValue(tableContent.get(j + listIndex));
+//                    }
+//                }
+//                listIndex = listIndex + (i * 50000);
+//                System.out.println(i + "th sheet writing successfully...");
+//            }
+
+            Sheet sheet = wb.createSheet();
+            sheet.setDefaultColumnWidth(16);
+            int currentRow = 0;
+            for (Map<String, String> map : tableContent) {
+                int currentCol = 0;
+                Row row = sheet.createRow(currentRow);
+                for (Entry<String, String> entry : map.entrySet()) {
+                    if (currentRow == 0){
+                        row.createCell(currentCol).setCellValue(entry.getKey());
+                    }else {
+                        row.createCell(currentCol).setCellValue(entry.getValue());
                     }
-                } else {
-                    for (int j = 0; j < 50000; j++) {
-                        Row row = sheet.createRow(j);
-                        row.createCell(0).setCellValue(list.get(j + listIndex));
-                    }
+                    ++currentCol;
                 }
-                listIndex = listIndex + (i * 50000);
-                System.out.println(i + "th sheet writing successfully...");
+                ++currentRow;
             }
+
             wb.write(fileOut);
             fileOut.close();
             wb.close();

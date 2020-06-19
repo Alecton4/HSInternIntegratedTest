@@ -57,8 +57,9 @@ public class MySqlConnector {
             String columnNames;
             String values;
             String restriction;
+            List<Map<String, String>> tableContent = null;
             String filePath;
-            List<Map<String, String>> fileContent;
+            List<Map<String, String>> fileContent = null;
 
             while (choice != 0) {
                 System.out.println("----------------------------------------");
@@ -74,6 +75,7 @@ public class MySqlConnector {
 
                 switch (choice) {
                     case 1:
+                        //finished
                         System.out.println("----------------------------------------");
                         System.out.println("enter your command(in one single line): ");
                         sql = App.scanner.nextLine();
@@ -90,6 +92,7 @@ public class MySqlConnector {
                         break;
 
                     case 2:
+                        //finished
                         System.out.println("----------------------------------------");
                         System.out.print("Enter table name: ");
                         tableName = App.scanner.nextLine();
@@ -115,6 +118,7 @@ public class MySqlConnector {
                         break;
 
                     case 3:
+                        //finished but class related to Excel needs optimizing
                         System.out.println("----------------------------------------");
                         System.out.print("Enter Excel file path: ");
                         filePath = App.scanner.nextLine();
@@ -123,10 +127,11 @@ public class MySqlConnector {
                         filePath = "D:\\yzhao\\Documents\\tmp\\t_area_part.xlsx";
 
                         fileContent = ExcelFileOperator.excelToList(filePath);
-                        ExcelFileOperator.printContent(fileContent);
+                        ExcelFileOperator.printFile(fileContent);
                         break;
 
                     case 4:
+                        //finished but class related to Excel needs optimizing
                         System.out.println("----------------------------------------");
                         System.out.print("Enter table name: ");
                         tableName = App.scanner.nextLine();
@@ -146,19 +151,17 @@ public class MySqlConnector {
                         sql = "SELECT " + columnNames + " FROM " + tableName + restriction;
                         try {
                             rs = stmtForRS.executeQuery(sql);    //查询的时候用executeQuery
+                            rsmd = stmtForRSMD.executeQuery(sql).getMetaData();
+                            tableContent = tableToList(rs, rsmd);
                         } catch (SQLException throwables) {
                             throwables.printStackTrace();
                         }
-
-                        List<String> strs = new ArrayList<String>();
-                        while (rs.next()) {
-                            strs.add(rs.getString(1));
-                        }
-                        ExcelFileOperator.exportExcel(strs, filePath);
+                        ExcelFileOperator.exportExcel(tableContent, filePath);
 
                         break;
 
                     case 5:
+                        //TODO
                         System.out.println("----------------------------------------");
                         System.out.print("Enter Excel file path: ");
                         filePath = App.scanner.nextLine();
@@ -173,17 +176,12 @@ public class MySqlConnector {
                         if (fileContent != null) {
                             System.out.println("Writing to table...");
 
-                            //遍历解析出来的list
                             for (Map<String, String> map : fileContent) {
                                 columnNames = "";
                                 values = "";
                                 for (Map.Entry<String, String> entry : map.entrySet()) {
-                                    if (!entry.getKey().equals("ctime")) {
                                         columnNames += "," + entry.getKey();
                                         values += ",\'" + entry.getValue() + "\'";
-                                    }
-//                                    columnNames += "," + entry.getKey();
-//                                    values += ",\'" + entry.getValue() + "\'";
                                 }
                                 columnNames = columnNames.substring(1);
                                 values = values.substring(1);
@@ -243,11 +241,11 @@ public class MySqlConnector {
     public static List<Map<String, String>> tableToList(ResultSet rs, ResultSetMetaData rsmd) {
         try {
             List<Map<String, String>> tableContent = new ArrayList<Map<String, String>>();
-            int nunCol = rsmd.getColumnCount();
+            int numCol = rsmd.getColumnCount();
 
             while (rs.next()) {
                 Map<String, String> map = new LinkedHashMap<String, String>();
-                for (int i = 0; i < nunCol; i++) {
+                for (int i = 0; i < numCol; i++) {
                     map.put(rsmd.getColumnName(i+1), rs.getString(i+1));
                 }
                 tableContent.add(map);
@@ -255,8 +253,8 @@ public class MySqlConnector {
             return tableContent;
         } catch (SQLException throwables) {
             throwables.printStackTrace();
-            return null;
         }
+        return null;
     }
 
     public static void printTable(ResultSet rs, ResultSetMetaData rsmd){

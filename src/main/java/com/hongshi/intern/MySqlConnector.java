@@ -2,14 +2,14 @@ package com.hongshi.intern;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 public class MySqlConnector {
+
     public static void connectMySql() {
         System.out.println("Start connecting MySQL...");
-        Connection conn;
-
         System.out.print("Enter host: ");
         String host = App.scanner.nextLine();
         System.out.print("Enter port: ");
@@ -28,19 +28,28 @@ public class MySqlConnector {
         userName = "root";
         password = "10030330";
 
-        String url = "jdbc:mysql://" + host + ":" + port + "/" + database + "?autoReconnect=true&useSSL=false";
-        String driver = "com.mysql.cj.jdbc.Driver";
-        Statement stmt = null;
+        // MySQL 8.0 以下版本 - JDBC 驱动名及数据库 URL
+//         final String JDBC_DRIVER = "com.mysql.jdbc.Driver";
+//         final String DB_URL = "jdbc:mysql://localhost:3306/RUNOOB";
+
+        // MySQL 8.0 以上版本 - JDBC 驱动名及数据库 URL
+        final String DRIVER = "com.mysql.cj.jdbc.Driver";
+        final String URL = "jdbc:mysql://" + host + ":" + port + "/" + database + "?autoReconnect=true&useSSL=false";
+
+        Connection conn = null;
+        Statement stmtForRS = null;
+        Statement stmtForRSMD = null;
         ResultSet rs = null;
+        ResultSetMetaData rsmd = null;
         try {
             //a.导入驱动，加载具体的驱动类
-            Class.forName(driver);
+            Class.forName(DRIVER);
             //b.与数据库建立连接
-            conn = DriverManager.getConnection(url, userName, password);
+            conn = DriverManager.getConnection(URL, userName, password);
             //c.发送sql语句，执行sql语句
-            stmt = conn.createStatement();
+            stmtForRS = conn.createStatement();
+            stmtForRSMD = conn.createStatement();
             System.out.println("Connection successful!");
-
             //variables needed
             byte choice = -1;
             String sql;
@@ -48,7 +57,6 @@ public class MySqlConnector {
             String columnNames;
             String values;
             String restriction;
-            int numResultRow;
             String filePath;
             List<Map<String, String>> fileContent;
 
@@ -71,12 +79,12 @@ public class MySqlConnector {
                         sql = App.scanner.nextLine();
 
                         try {
-                            int count = stmt.executeUpdate(sql);    //增删改时用executeUpdate
+                            int count = stmtForRS.executeUpdate(sql);    //增删改时用executeUpdate
                             if (count > 0) {
                                 System.out.println("Operation success");
                             }
-                        } catch (SQLException throwables) {
-                            throwables.printStackTrace();
+                        } catch (SQLException throwable) {
+                            throwable.printStackTrace();
                         }
 
                         break;
@@ -96,18 +104,13 @@ public class MySqlConnector {
                         restriction = "";
 
                         sql = "SELECT " + columnNames + " FROM " + tableName + restriction;
-
                         try {
-                            rs = stmt.executeQuery(sql);    //查询的时候用executeQuery
+                            rs = stmtForRS.executeQuery(sql);    //查询的时候用executeQuery
+                            rsmd = stmtForRSMD.executeQuery(sql).getMetaData();
+                            printTable(rs, rsmd);
                         } catch (SQLException throwables) {
                             throwables.printStackTrace();
                         }
-                        numResultRow = 0;
-                        while (rs.next()) {
-                            ++numResultRow;
-                        }
-                        printTable(rs);
-                        System.out.println("Number of results: " + numResultRow);
 
                         break;
 
@@ -142,7 +145,7 @@ public class MySqlConnector {
 
                         sql = "SELECT " + columnNames + " FROM " + tableName + restriction;
                         try {
-                            rs = stmt.executeQuery(sql);    //查询的时候用executeQuery
+                            rs = stmtForRS.executeQuery(sql);    //查询的时候用executeQuery
                         } catch (SQLException throwables) {
                             throwables.printStackTrace();
                         }
@@ -185,7 +188,7 @@ public class MySqlConnector {
                                 columnNames = columnNames.substring(1);
                                 values = values.substring(1);
                                 sql = "INSERT INTO " + tableName + " (" + columnNames + ") VALUES (" + values + ")";
-                                stmt.executeUpdate(sql);
+                                stmtForRS.executeUpdate(sql);
                             }
                             System.out.println("Operation successful!");
                         } else {
@@ -202,48 +205,72 @@ public class MySqlConnector {
                         System.out.println("Invalid choice!");
                 }
             }
-//            scanner.close();
             if (rs != null) rs.close();
-            if (stmt != null) stmt.close();
+            if (stmtForRS != null) stmtForRS.close();
+            if (stmtForRSMD != null) stmtForRSMD.close();
             if (conn != null) conn.close();
 
+        } catch (SQLException se) {
+            // 处理 JDBC 错误
+            se.printStackTrace();
         } catch (Exception e) {
+            // 处理 Class.forName 错误
             e.printStackTrace();
         } finally {
+            //close resources
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException se) {
+                    se.printStackTrace();
+                }
+            }
+            if (stmtForRS != null) {
+                try {
+                    stmtForRS.close();
+                } catch (SQLException se2) {
+                }//ignore
+            }
             if (rs != null) {
                 try {
                     rs.close();
                 } catch (SQLException sqlEx) {
                 } // ignore
             }
-
-            if (stmt != null) {
-                try {
-                    stmt.close();
-                } catch (SQLException sqlEx) {
-                } // ignore
-            }
         }
     }
 
-    public static void printRow(int id, String area_code, String area_name, int level, String parent_code, String code2, String ctime) {
-        System.out.println("id = " + id + ", 地区码 = " + area_code + ", 地区名称 = " + area_name + ", 级别 = " + level + ", 上级码 = " + parent_code + ", 城乡区别 = " + code2 + ", 创建时间 = " + ctime);
-    }
-
-    public static void printTable(ResultSet rs) {
+    public static List<Map<String, String>> tableToList(ResultSet rs, ResultSetMetaData rsmd) {
         try {
+            List<Map<String, String>> tableContent = new ArrayList<Map<String, String>>();
+            int nunCol = rsmd.getColumnCount();
+
             while (rs.next()) {
-                int id = rs.getInt("id");
-                String area_code = rs.getString("area_code");
-                String area_name = rs.getString("area_name");
-                int level = rs.getInt("level");
-                String parent_code = rs.getString("parent_code");
-                String code2 = rs.getString("code2");
-                String ctime = rs.getString("ctime");
-                printRow(id, area_code, area_name, level, parent_code, code2, ctime);
+                Map<String, String> map = new LinkedHashMap<String, String>();
+                for (int i = 0; i < nunCol; i++) {
+                    map.put(rsmd.getColumnName(i+1), rs.getString(i+1));
+                }
+                tableContent.add(map);
             }
+            return tableContent;
         } catch (SQLException throwables) {
             throwables.printStackTrace();
+            return null;
+        }
+    }
+
+    public static void printTable(ResultSet rs, ResultSetMetaData rsmd){
+        List<Map<String, String>> tableContent = tableToList(rs, rsmd);
+        if (tableContent != null){
+            for (Map<String, String> map : tableContent) {
+                for (Map.Entry<String, String> entry : map.entrySet()) {
+                    System.out.print(entry.getKey() + ": " + entry.getValue() + ", ");
+                }
+                System.out.println();
+            }
+            System.out.println("Number of rows: " + tableContent.size());
+        }else {
+            System.out.println("Invalid content!");
         }
     }
 }

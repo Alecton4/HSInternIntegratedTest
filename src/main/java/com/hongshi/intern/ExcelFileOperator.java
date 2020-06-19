@@ -17,12 +17,12 @@ public class ExcelFileOperator {
         Workbook wb = readExcel(filePath);
         Sheet sheet;
         Row row;
-        List<Map<String, String>> list = null;
+        List<Map<String, String>> fileContent = null;
         String cellData;
 
         if (wb != null) {
             //用来存放表中数据
-            list = new ArrayList<Map<String, String>>();
+            fileContent = new ArrayList<Map<String, String>>();
             //获取第一个sheet
             sheet = wb.getSheetAt(0);
             //获取最大行数
@@ -48,22 +48,21 @@ public class ExcelFileOperator {
                 } else {
                     break;
                 }
-                list.add(map);
+                fileContent.add(map);
             }
         }
-        return list;
+        return fileContent;
     }
 
-    public static void printContent(List<Map<String, String>> list) {
-        if (list != null) {
-            //遍历解析出来的list
-            for (Map<String, String> map : list) {
+    public static void printContent(List<Map<String, String>> fileContent) {
+        if (fileContent != null) {
+            for (Map<String, String> map : fileContent) {
                 for (Entry<String, String> entry : map.entrySet()) {
                     System.out.print(entry.getKey() + ": " + entry.getValue() + ", ");
                 }
                 System.out.println();
             }
-            System.out.println("Number of rows: " + list.size());
+            System.out.println("Number of rows: " + fileContent.size());
         } else {
             System.out.println("Invalid content!");
         }

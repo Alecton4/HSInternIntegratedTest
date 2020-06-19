@@ -17,8 +17,8 @@ public class App {
             System.out.println("2. Process Excel file");
             System.out.println("0. Quit");
             System.out.print("Enter your choice: ");
-            choice = scanner.nextByte();
-            scanner.nextLine();
+            choice = App.scanner.nextByte();
+            App.scanner.nextLine();
 
             switch (choice){
                 case 1:

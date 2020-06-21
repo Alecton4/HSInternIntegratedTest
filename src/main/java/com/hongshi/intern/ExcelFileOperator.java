@@ -15,7 +15,7 @@ import java.util.Map.Entry;
 
 public class ExcelFileOperator {
 
-    public static List<Map<String, String>> excelToList(String filePath) {
+    public static List<Map<String, String>> excelToMapList(String filePath) {
         Workbook wb = readExcel(filePath);
         Sheet sheet;
         Row row;
@@ -53,11 +53,58 @@ public class ExcelFileOperator {
         return fileContent;
     }
 
-    public static void printFile(List<Map<String, String>> fileContent) {
+    public static List<ArrayList<String>> excelToListList(String filePath) {
+        Workbook wb = readExcel(filePath);
+        Sheet sheet;
+        Row row;
+        List<ArrayList<String>> fileContent = null;
+
+        if (wb != null) {
+            fileContent = new ArrayList<ArrayList<String>>();
+            //obtain num of rows
+            sheet = wb.getSheetAt(0);
+            int numRow = sheet.getPhysicalNumberOfRows();
+            //obtain num of columns
+            row = sheet.getRow(0);
+            int numCol = row.getPhysicalNumberOfCells();
+
+            for (int i = 0; i < numRow; i++) {
+                ArrayList<String> strList = new ArrayList<String>();
+                row = sheet.getRow(i);
+                if (row != null) {
+                    for (int j = 0; j < numCol; j++) {
+                        strList.add(cellValueToString(row.getCell(j)));
+                    }
+                } else {
+                    break;
+                }
+                fileContent.add(i, strList);
+            }
+        }
+        return fileContent;
+    }
+
+    public static void printExcelFromMapList(String filePath) {
+        List<Map<String, String>> fileContent = excelToMapList(filePath);
         if (fileContent != null) {
             for (Map<String, String> map : fileContent) {
                 for (Entry<String, String> entry : map.entrySet()) {
                     System.out.print(entry.getKey() + ": " + entry.getValue() + ", ");
+                }
+                System.out.println();
+            }
+            System.out.println("Number of rows: " + fileContent.size());
+        } else {
+            System.out.println("Invalid content!");
+        }
+    }
+
+    public static void printExcelFromListList(String filePath) {
+        List<ArrayList<String>> fileContent = excelToListList(filePath);
+        if (fileContent != null) {
+            for (ArrayList<String> strList : fileContent) {
+                for (String str : strList) {
+                    System.out.print(str + " ");
                 }
                 System.out.println();
             }
@@ -127,7 +174,7 @@ public class ExcelFileOperator {
         return cellValue;
     }
 
-    public static void exportExcel(List<Map<String, String>> tableContent, String filePath) {
+    public static void exportExcelFromMapList(List<Map<String, String>> tableContent, String filePath) {
         try {
             String extString = filePath.substring(filePath.lastIndexOf("."));
             Workbook wb = null;
@@ -197,6 +244,69 @@ public class ExcelFileOperator {
             System.out.println("Writing successful!");
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public static void exportExcelFromListList(List<ArrayList<String>> tableContent, String filePath) {
+        try {
+            String extString = filePath.substring(filePath.lastIndexOf("."));
+            Workbook wb = null;
+            if (".xls".equals(extString)) {
+                wb = new HSSFWorkbook();    //.xls
+            } else if (".xlsx".equals(extString)) {
+                wb = new XSSFWorkbook();    //.xlsx
+            } else {
+                throw new IOException("Unsupported file type!");
+            }
+            FileOutputStream fileOut = new FileOutputStream(filePath);
+
+            int numRecords = tableContent.size();
+            int numSheets = 1;
+            if (numRecords > 50000) {
+                numSheets = (numRecords % 50000) == 0 ? (numRecords / 50000) : ((numRecords / 50000) + 1);
+            }
+            System.out.println("Start writing to excel file，num of records：" + numRecords + ", num of sheets：" + numSheets);
+
+            int rowNums = 0;
+            int colNums = tableContent.get(0).size();
+            int listIndex = 0;
+            for (int i = 0; i <= numSheets; i++) {
+                Sheet sheet = wb.createSheet();
+                sheet.setDefaultColumnWidth(16);
+                if (i == numSheets) {
+                    rowNums = numRecords - ((numSheets - 1) * 50000);
+                    for (int currentRow = 0; currentRow < rowNums; ++currentRow) {
+                        fillCell(tableContent, colNums, sheet, currentRow);
+                    }
+                } else {
+                    for (int currentRow = 0; currentRow < 50000; currentRow++) {
+                        fillCell(tableContent, colNums, sheet, currentRow);
+                    }
+                }
+                listIndex = listIndex + (i * 50000);
+                System.out.println(i + "th sheet writing successfully...");
+            }
+
+            wb.write(fileOut);
+            fileOut.close();
+            wb.close();
+            System.out.println("Writing successful!");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void fillCell(List<ArrayList<String>> tableContent, int colNums, Sheet sheet, int currentRow) {
+        Row row = sheet.createRow(currentRow);
+        for (int currentCol = 0; currentCol< colNums; ++currentCol){
+            String cellStringValue = tableContent.get(currentRow).get(currentCol);
+            if (Helper.isInteger(cellStringValue)) {
+                row.createCell(currentCol).setCellValue(Integer.parseInt(cellStringValue));
+            } else if (Helper.isDouble(cellStringValue)) {
+                row.createCell(currentCol).setCellValue(Double.parseDouble(cellStringValue));
+            } else {
+                row.createCell(currentCol).setCellValue(cellStringValue);
+            }
         }
     }
 

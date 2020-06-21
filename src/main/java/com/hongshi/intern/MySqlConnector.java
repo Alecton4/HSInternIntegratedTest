@@ -126,8 +126,7 @@ public class MySqlConnector {
                         //for test
                         filePath = "D:\\yzhao\\Documents\\tmp\\t_area_part.xlsx";
 
-                        fileContent = ExcelFileOperator.excelToList(filePath);
-                        ExcelFileOperator.printFile(fileContent);
+                        ExcelFileOperator.printExcelFromListList(filePath);
                         break;
 
                     case 4:
@@ -156,7 +155,7 @@ public class MySqlConnector {
                         } catch (SQLException throwables) {
                             throwables.printStackTrace();
                         }
-                        ExcelFileOperator.exportExcel(tableContent, filePath);
+                        ExcelFileOperator.exportExcelFromMapList(tableContent, filePath);
 
                         break;
 
@@ -172,7 +171,7 @@ public class MySqlConnector {
                         filePath = "D:\\yzhao\\Documents\\tmp\\t_area_part.xlsx";
                         tableName = "t_area_test";
 
-                        fileContent = ExcelFileOperator.excelToList(filePath);
+                        fileContent = ExcelFileOperator.excelToMapList(filePath);
                         if (fileContent != null) {
                             System.out.println("Writing to table...");
 

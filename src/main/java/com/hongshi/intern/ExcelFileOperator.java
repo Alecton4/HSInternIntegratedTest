@@ -142,31 +142,7 @@ public class ExcelFileOperator {
 
             int numRecords = tableContent.size();
             int numSheets = 1;
-//            if (numRecords > 50000) {
-//                numSheets = (numRecords % 50000) == 0 ? (numRecords / 50000) : ((numRecords / 50000) + 1);
-//            }
             System.out.println("Start writing to excel file，num of records：" + numRecords + ", num of sheets：" + numSheets);
-
-//            int rowNums = 0;
-//            int listIndex = 0;
-//            for (int i = 0; i <= numSheets; i++) {
-//                Sheet sheet = wb.createSheet();
-//                sheet.setDefaultColumnWidth(16);
-//                if (i == numSheets) {
-//                    rowNums = numRecords - ((numSheets - 1) * 50000);
-//                    for (int j = 0; j < rowNums; j++) {
-//                        Row row = sheet.createRow(j);
-//                        row.createCell(0).setCellValue(tableContent.get(i).entrySet());
-//                    }
-//                } else {
-//                    for (int j = 0; j < 50000; j++) {
-//                        Row row = sheet.createRow(j);
-//                        row.createCell(0).setCellValue(tableContent.get(j + listIndex));
-//                    }
-//                }
-//                listIndex = listIndex + (i * 50000);
-//                System.out.println(i + "th sheet writing successfully...");
-//            }
 
             Sheet sheet = wb.createSheet();
             sheet.setDefaultColumnWidth(16);

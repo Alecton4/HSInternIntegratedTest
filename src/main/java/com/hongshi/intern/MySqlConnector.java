@@ -21,13 +21,6 @@ public class MySqlConnector {
         System.out.print("Enter password: ");
         String password = Helper.scanner.nextLine();
 
-        //for test
-        host = "localhost";
-        port = "3306";
-        database = "hs_test";
-        userName = "root";
-        password = "10030330";
-
         // MySQL 8.0 以下版本 - JDBC 驱动名及数据库 URL
 //         final String JDBC_DRIVER = "com.mysql.jdbc.Driver";
 //         final String DB_URL = "jdbc:mysql://localhost:3306/RUNOOB";
@@ -101,11 +94,6 @@ public class MySqlConnector {
                         System.out.print("Enter restrictions(in one single line, with \"WHERE\"): ");
                         restriction = Helper.scanner.nextLine();
 
-                        //for test
-                        tableName = "t_area";
-                        columnNames = "*";
-                        restriction = "";
-
                         sql = "SELECT " + columnNames + " FROM " + tableName + restriction;
                         try {
                             rs = stmtForRS.executeQuery(sql);    //查询的时候用executeQuery
@@ -123,9 +111,6 @@ public class MySqlConnector {
                         System.out.print("Enter Excel file path: ");
                         filePath = Helper.scanner.nextLine();
 
-                        //for test
-                        filePath = "D:\\yzhao\\Documents\\tmp\\t_area_part.xlsx";
-
                         fileContent = ExcelFileOperator.excelToList(filePath);
                         ExcelFileOperator.printFile(fileContent);
                         break;
@@ -141,12 +126,6 @@ public class MySqlConnector {
                         restriction = Helper.scanner.nextLine();
                         System.out.print("Enter Excel file path: ");
                         filePath = Helper.scanner.nextLine();
-
-                        //for test
-                        tableName = "t_area";
-                        columnNames = "*";
-                        restriction = "";
-                        filePath = "D:\\yzhao\\Documents\\tmp\\output_test.xlsx";
 
                         sql = "SELECT " + columnNames + " FROM " + tableName + restriction;
                         try {
@@ -167,10 +146,6 @@ public class MySqlConnector {
                         filePath = Helper.scanner.nextLine();
                         System.out.print("Enter table you want to write to: ");
                         tableName = Helper.scanner.nextLine();
-
-                        //for test
-                        filePath = "D:\\yzhao\\Documents\\tmp\\t_area_part.xlsx";
-                        tableName = "t_area_test";
 
                         fileContent = ExcelFileOperator.excelToList(filePath);
                         if (fileContent != null) {

@@ -2,7 +2,6 @@ package com.hongshi.intern;
 
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.*;
@@ -135,7 +134,7 @@ public class ExcelFileOperator {
             if (".xls".equals(extString)) {
                 wb = new HSSFWorkbook();    //.xls
             } else if (".xlsx".equals(extString)) {
-                wb = new SXSSFWorkbook();    //.xlsx
+                wb = new XSSFWorkbook();    //.xlsx
             } else {
                 throw new IOException("Unsupported file type!");
             }
@@ -176,10 +175,16 @@ public class ExcelFileOperator {
                 int currentCol = 0;
                 Row row = sheet.createRow(currentRow);
                 for (Entry<String, String> entry : map.entrySet()) {
-                    if (currentRow == 0){
+                    if (currentRow == 0) {
                         row.createCell(currentCol).setCellValue(entry.getKey());
-                    }else {
-                        row.createCell(currentCol).setCellValue(entry.getValue());
+                    } else {
+                        if (Helper.isInteger(entry.getValue())) {
+                            row.createCell(currentCol).setCellValue(Integer.parseInt(entry.getValue()));
+                        } else if (Helper.isDouble(entry.getValue())) {
+                            row.createCell(currentCol).setCellValue(Double.parseDouble(entry.getValue()));
+                        } else {
+                            row.createCell(currentCol).setCellValue(entry.getValue());
+                        }
                     }
                     ++currentCol;
                 }
@@ -194,4 +199,5 @@ public class ExcelFileOperator {
             e.printStackTrace();
         }
     }
+
 }

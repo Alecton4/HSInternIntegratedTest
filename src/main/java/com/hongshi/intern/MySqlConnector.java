@@ -11,22 +11,15 @@ public class MySqlConnector {
     public static void connectMySql() {
         System.out.println("Start connecting MySQL...");
         System.out.print("Enter host: ");
-        String host = App.scanner.nextLine();
+        String host = Helper.scanner.nextLine();
         System.out.print("Enter port: ");
-        String port = App.scanner.nextLine();
+        String port = Helper.scanner.nextLine();
         System.out.print("Enter database name: ");
-        String database = App.scanner.nextLine();
+        String database = Helper.scanner.nextLine();
         System.out.print("Enter user name: ");
-        String userName = App.scanner.nextLine();
+        String userName = Helper.scanner.nextLine();
         System.out.print("Enter password: ");
-        String password = App.scanner.nextLine();
-
-        //for test
-        host = "localhost";
-        port = "3306";
-        database = "hs_test";
-        userName = "root";
-        password = "10030330";
+        String password = Helper.scanner.nextLine();
 
         // MySQL 8.0 以下版本 - JDBC 驱动名及数据库 URL
 //         final String JDBC_DRIVER = "com.mysql.jdbc.Driver";
@@ -70,15 +63,15 @@ public class MySqlConnector {
                 System.out.println("5: Write Excel file to database table");
                 System.out.println("0: Quit");
                 System.out.print("Choose your operation: ");
-                choice = App.scanner.nextByte();
-                App.scanner.nextLine();
+                choice = Helper.scanner.nextByte();
+                Helper.scanner.nextLine();
 
                 switch (choice) {
                     case 1:
                         //finished
                         System.out.println("----------------------------------------");
                         System.out.println("enter your command(in one single line): ");
-                        sql = App.scanner.nextLine();
+                        sql = Helper.scanner.nextLine();
 
                         try {
                             int count = stmtForRS.executeUpdate(sql);    //增删改时用executeUpdate
@@ -95,16 +88,11 @@ public class MySqlConnector {
                         //finished
                         System.out.println("----------------------------------------");
                         System.out.print("Enter table name: ");
-                        tableName = App.scanner.nextLine();
+                        tableName = Helper.scanner.nextLine();
                         System.out.print("Enter column names(separated by commas): ");
-                        columnNames = App.scanner.nextLine();
+                        columnNames = Helper.scanner.nextLine();
                         System.out.print("Enter restrictions(in one single line, with \"WHERE\"): ");
-                        restriction = App.scanner.nextLine();
-
-                        //for test
-                        tableName = "t_area";
-                        columnNames = "*";
-                        restriction = "";
+                        restriction = Helper.scanner.nextLine();
 
                         sql = "SELECT " + columnNames + " FROM " + tableName + restriction;
                         try {
@@ -121,10 +109,7 @@ public class MySqlConnector {
                         //finished but class related to Excel needs optimizing
                         System.out.println("----------------------------------------");
                         System.out.print("Enter Excel file path: ");
-                        filePath = App.scanner.nextLine();
-
-                        //for test
-                        filePath = "D:\\yzhao\\Documents\\tmp\\t_area_part.xlsx";
+                        filePath = Helper.scanner.nextLine();
 
                         fileContent = ExcelFileOperator.excelToList(filePath);
                         ExcelFileOperator.printFile(fileContent);
@@ -134,19 +119,13 @@ public class MySqlConnector {
                         //finished but class related to Excel needs optimizing
                         System.out.println("----------------------------------------");
                         System.out.print("Enter table name: ");
-                        tableName = App.scanner.nextLine();
+                        tableName = Helper.scanner.nextLine();
                         System.out.print("Enter column names(separated by commas): ");
-                        columnNames = App.scanner.nextLine();
+                        columnNames = Helper.scanner.nextLine();
                         System.out.print("Enter restrictions(in one single line, with \"WHERE\"): ");
-                        restriction = App.scanner.nextLine();
+                        restriction = Helper.scanner.nextLine();
                         System.out.print("Enter Excel file path: ");
-                        filePath = App.scanner.nextLine();
-
-                        //for test
-                        tableName = "t_area";
-                        columnNames = "*";
-                        restriction = "";
-                        filePath = "D:\\yzhao\\Documents\\tmp\\output_test.xlsx";
+                        filePath = Helper.scanner.nextLine();
 
                         sql = "SELECT " + columnNames + " FROM " + tableName + restriction;
                         try {
@@ -164,13 +143,9 @@ public class MySqlConnector {
                         //TODO
                         System.out.println("----------------------------------------");
                         System.out.print("Enter Excel file path: ");
-                        filePath = App.scanner.nextLine();
+                        filePath = Helper.scanner.nextLine();
                         System.out.print("Enter table you want to write to: ");
-                        tableName = App.scanner.nextLine();
-
-                        //for test
-                        filePath = "D:\\yzhao\\Documents\\tmp\\t_area_part.xlsx";
-                        tableName = "t_area_test";
+                        tableName = Helper.scanner.nextLine();
 
                         fileContent = ExcelFileOperator.excelToList(filePath);
                         if (fileContent != null) {

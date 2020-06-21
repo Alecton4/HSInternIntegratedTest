@@ -2,7 +2,6 @@ package com.hongshi.intern;
 
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.*;
@@ -135,7 +134,7 @@ public class ExcelFileOperator {
             if (".xls".equals(extString)) {
                 wb = new HSSFWorkbook();    //.xls
             } else if (".xlsx".equals(extString)) {
-                wb = new SXSSFWorkbook();    //.xlsx
+                wb = new XSSFWorkbook();    //.xlsx
             } else {
                 throw new IOException("Unsupported file type!");
             }
@@ -143,31 +142,7 @@ public class ExcelFileOperator {
 
             int numRecords = tableContent.size();
             int numSheets = 1;
-//            if (numRecords > 50000) {
-//                numSheets = (numRecords % 50000) == 0 ? (numRecords / 50000) : ((numRecords / 50000) + 1);
-//            }
             System.out.println("Start writing to excel file，num of records：" + numRecords + ", num of sheets：" + numSheets);
-
-//            int rowNums = 0;
-//            int listIndex = 0;
-//            for (int i = 0; i <= numSheets; i++) {
-//                Sheet sheet = wb.createSheet();
-//                sheet.setDefaultColumnWidth(16);
-//                if (i == numSheets) {
-//                    rowNums = numRecords - ((numSheets - 1) * 50000);
-//                    for (int j = 0; j < rowNums; j++) {
-//                        Row row = sheet.createRow(j);
-//                        row.createCell(0).setCellValue(tableContent.get(i).entrySet());
-//                    }
-//                } else {
-//                    for (int j = 0; j < 50000; j++) {
-//                        Row row = sheet.createRow(j);
-//                        row.createCell(0).setCellValue(tableContent.get(j + listIndex));
-//                    }
-//                }
-//                listIndex = listIndex + (i * 50000);
-//                System.out.println(i + "th sheet writing successfully...");
-//            }
 
             Sheet sheet = wb.createSheet();
             sheet.setDefaultColumnWidth(16);
@@ -176,10 +151,16 @@ public class ExcelFileOperator {
                 int currentCol = 0;
                 Row row = sheet.createRow(currentRow);
                 for (Entry<String, String> entry : map.entrySet()) {
-                    if (currentRow == 0){
+                    if (currentRow == 0) {
                         row.createCell(currentCol).setCellValue(entry.getKey());
-                    }else {
-                        row.createCell(currentCol).setCellValue(entry.getValue());
+                    } else {
+                        if (Helper.isInteger(entry.getValue())) {
+                            row.createCell(currentCol).setCellValue(Integer.parseInt(entry.getValue()));
+                        } else if (Helper.isDouble(entry.getValue())) {
+                            row.createCell(currentCol).setCellValue(Double.parseDouble(entry.getValue()));
+                        } else {
+                            row.createCell(currentCol).setCellValue(entry.getValue());
+                        }
                     }
                     ++currentCol;
                 }
@@ -194,4 +175,5 @@ public class ExcelFileOperator {
             e.printStackTrace();
         }
     }
+
 }

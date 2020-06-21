@@ -57,9 +57,7 @@ public class MySqlConnector {
             String columnNames;
             String values;
             String restriction;
-            List<Map<String, String>> tableContent = null;
             String filePath;
-            List<Map<String, String>> fileContent = null;
 
             while (choice != 0) {
                 System.out.println("----------------------------------------");
@@ -75,7 +73,6 @@ public class MySqlConnector {
 
                 switch (choice) {
                     case 1:
-                        //finished
                         System.out.println("----------------------------------------");
                         System.out.println("enter your command(in one single line): ");
                         sql = Helper.scanner.nextLine();
@@ -92,7 +89,6 @@ public class MySqlConnector {
                         break;
 
                     case 2:
-                        //finished
                         System.out.println("----------------------------------------");
                         System.out.print("Enter table name: ");
                         tableName = Helper.scanner.nextLine();
@@ -110,7 +106,7 @@ public class MySqlConnector {
                         try {
                             rs = stmtForRS.executeQuery(sql);    //查询的时候用executeQuery
                             rsmd = stmtForRSMD.executeQuery(sql).getMetaData();
-                            printTable(rs, rsmd);
+                            printTableFromListList(rs, rsmd);
                         } catch (SQLException throwables) {
                             throwables.printStackTrace();
                         }
@@ -118,7 +114,6 @@ public class MySqlConnector {
                         break;
 
                     case 3:
-                        //finished but class related to Excel needs optimizing
                         System.out.println("----------------------------------------");
                         System.out.print("Enter Excel file path: ");
                         filePath = Helper.scanner.nextLine();
@@ -130,7 +125,6 @@ public class MySqlConnector {
                         break;
 
                     case 4:
-                        //finished but class related to Excel needs optimizing
                         System.out.println("----------------------------------------");
                         System.out.print("Enter table name: ");
                         tableName = Helper.scanner.nextLine();
@@ -151,16 +145,14 @@ public class MySqlConnector {
                         try {
                             rs = stmtForRS.executeQuery(sql);    //查询的时候用executeQuery
                             rsmd = stmtForRSMD.executeQuery(sql).getMetaData();
-                            tableContent = tableToList(rs, rsmd);
+                            ExcelFileOperator.exportExcelFromMapList(tableToMapList(rs, rsmd), filePath);
+//                            ExcelFileOperator.exportExcelFromListList(tableToListList(rs, rsmd), filePath);
                         } catch (SQLException throwables) {
                             throwables.printStackTrace();
                         }
-                        ExcelFileOperator.exportExcelFromMapList(tableContent, filePath);
-
                         break;
 
                     case 5:
-                        //TODO
                         System.out.println("----------------------------------------");
                         System.out.print("Enter Excel file path: ");
                         filePath = Helper.scanner.nextLine();
@@ -171,26 +163,30 @@ public class MySqlConnector {
                         filePath = "D:\\yzhao\\Documents\\tmp\\t_area_part.xlsx";
                         tableName = "t_area_test";
 
-                        fileContent = ExcelFileOperator.excelToMapList(filePath);
-                        if (fileContent != null) {
-                            System.out.println("Writing to table...");
+//                        writeToMySqlFromMapList(ExcelFileOperator.excelToMapList(filePath), tableName, stmtForRS);
+                        writeToMySqlFromListList(ExcelFileOperator.excelToListList(filePath), tableName, stmtForRS);
+//                        fileContentMapList = ExcelFileOperator.excelToMapList(filePath);
+//                        if (fileContentMapList != null) {
+//                            System.out.println("Writing to table...");
+//
+//                            for (Map<String, String> map : fileContentMapList) {
+//                                columnNames = "";
+//                                values = "";
+//                                for (Map.Entry<String, String> entry : map.entrySet()) {
+//                                    columnNames += "," + entry.getKey();
+//                                    values += ",\'" + entry.getValue() + "\'";
+//                                }
+//                                columnNames = columnNames.substring(1);
+//                                values = values.substring(1);
+//                                sql = "INSERT INTO " + tableName + " (" + columnNames + ") VALUES (" + values + ")";
+//                                stmtForRS.executeUpdate(sql);
+//                            }
+//                            System.out.println("Operation successful!");
+//                        } else {
+//                            System.out.println("Invalid content!");
+//                        }
 
-                            for (Map<String, String> map : fileContent) {
-                                columnNames = "";
-                                values = "";
-                                for (Map.Entry<String, String> entry : map.entrySet()) {
-                                        columnNames += "," + entry.getKey();
-                                        values += ",\'" + entry.getValue() + "\'";
-                                }
-                                columnNames = columnNames.substring(1);
-                                values = values.substring(1);
-                                sql = "INSERT INTO " + tableName + " (" + columnNames + ") VALUES (" + values + ")";
-                                stmtForRS.executeUpdate(sql);
-                            }
-                            System.out.println("Operation successful!");
-                        } else {
-                            System.out.println("Invalid content!");
-                        }
+
                         break;
 
                     case 0:
@@ -237,7 +233,7 @@ public class MySqlConnector {
         }
     }
 
-    public static List<Map<String, String>> tableToList(ResultSet rs, ResultSetMetaData rsmd) {
+    public static List<Map<String, String>> tableToMapList(ResultSet rs, ResultSetMetaData rsmd) {
         try {
             List<Map<String, String>> tableContent = new ArrayList<Map<String, String>>();
             int numCol = rsmd.getColumnCount();
@@ -245,7 +241,7 @@ public class MySqlConnector {
             while (rs.next()) {
                 Map<String, String> map = new LinkedHashMap<String, String>();
                 for (int i = 0; i < numCol; i++) {
-                    map.put(rsmd.getColumnName(i+1), rs.getString(i+1));
+                    map.put(rsmd.getColumnName(i + 1), rs.getString(i + 1));
                 }
                 tableContent.add(map);
             }
@@ -256,17 +252,91 @@ public class MySqlConnector {
         return null;
     }
 
-    public static void printTable(ResultSet rs, ResultSetMetaData rsmd){
-        List<Map<String, String>> tableContent = tableToList(rs, rsmd);
-        if (tableContent != null){
-            for (Map<String, String> map : tableContent) {
-                for (Map.Entry<String, String> entry : map.entrySet()) {
-                    System.out.print(entry.getKey() + ": " + entry.getValue() + ", ");
-                }
-                System.out.println();
+    public static List<ArrayList<String>> tableToListList(ResultSet rs, ResultSetMetaData rsmd) {
+        try {
+            List<ArrayList<String>> tableContent = new ArrayList<ArrayList<String>>();
+            int numCol = rsmd.getColumnCount();
+
+            //get column names
+            ArrayList<String> firstRow = new ArrayList<String>();
+            for (int i = 0; i < numCol; ++i) {
+                firstRow.add(rsmd.getColumnName(i + 1));
             }
-            System.out.println("Number of rows: " + tableContent.size());
-        }else {
+            tableContent.add(firstRow);
+
+            //get data
+            while (rs.next()) {
+                ArrayList<String> strList = new ArrayList<String>();
+                for (int i = 0; i < numCol; i++) {
+                    strList.add(rs.getString(i + 1));
+                }
+                tableContent.add(strList);
+            }
+            return tableContent;
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+        return null;
+    }
+
+    public static void printTableFromMapList(ResultSet rs, ResultSetMetaData rsmd) {
+        Helper.printMapList(tableToMapList(rs, rsmd));
+    }
+
+    public static void printTableFromListList(ResultSet rs, ResultSetMetaData rsmd) {
+        Helper.printListList(tableToListList(rs, rsmd));
+    }
+
+    public static void writeToMySqlFromMapList(List<Map<String, String>> fileContent, String tableName, Statement stmt) {
+        if (fileContent != null) {
+            System.out.println("Writing to table...");
+
+            for (Map<String, String> map : fileContent) {
+                String columnNames = "";
+                String values = "";
+                for (Map.Entry<String, String> entry : map.entrySet()) {
+                    columnNames += "," + entry.getKey();
+                    values += ",\'" + entry.getValue() + "\'";
+                }
+                columnNames = columnNames.substring(1);
+                values = values.substring(1);
+                String sql = "INSERT INTO " + tableName + " (" + columnNames + ") VALUES (" + values + ")";
+                try {
+                    stmt.executeUpdate(sql);
+                } catch (SQLException throwables) {
+                    throwables.printStackTrace();
+                }
+            }
+            System.out.println("Operation successful!");
+        } else {
+            System.out.println("Invalid content!");
+        }
+    }
+
+    public static void writeToMySqlFromListList(List<ArrayList<String>> fileContent, String tableName, Statement stmt) {
+        if (fileContent != null) {
+            System.out.println("Writing to table...");
+            int numRow = fileContent.size();
+            int numCol = fileContent.get(0).size();
+
+            for (int currentRow = 1; currentRow < numRow; ++currentRow) {
+                String columnNames = "";
+                String values = "";
+                for (int currentCol = 0; currentCol < numCol; ++currentCol) {
+                    columnNames += "," + fileContent.get(0).get(currentCol);
+                    values += ",\'" + fileContent.get(currentRow).get(currentCol) + "\'";
+                }
+                columnNames = columnNames.substring(1);
+                values = values.substring(1);
+                String sql = "INSERT INTO " + tableName + " (" + columnNames + ") VALUES (" + values + ")";
+                try {
+                    stmt.executeUpdate(sql);
+                } catch (SQLException throwables) {
+                    throwables.printStackTrace();
+                }
+            }
+            System.out.println("Operation successful!");
+        } else {
             System.out.println("Invalid content!");
         }
     }

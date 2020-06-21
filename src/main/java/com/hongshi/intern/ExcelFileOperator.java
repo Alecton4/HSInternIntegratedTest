@@ -85,33 +85,11 @@ public class ExcelFileOperator {
     }
 
     public static void printExcelFromMapList(String filePath) {
-        List<Map<String, String>> fileContent = excelToMapList(filePath);
-        if (fileContent != null) {
-            for (Map<String, String> map : fileContent) {
-                for (Entry<String, String> entry : map.entrySet()) {
-                    System.out.print(entry.getKey() + ": " + entry.getValue() + ", ");
-                }
-                System.out.println();
-            }
-            System.out.println("Number of rows: " + fileContent.size());
-        } else {
-            System.out.println("Invalid content!");
-        }
+        Helper.printMapList(excelToMapList(filePath));
     }
 
     public static void printExcelFromListList(String filePath) {
-        List<ArrayList<String>> fileContent = excelToListList(filePath);
-        if (fileContent != null) {
-            for (ArrayList<String> strList : fileContent) {
-                for (String str : strList) {
-                    System.out.print(str + " ");
-                }
-                System.out.println();
-            }
-            System.out.println("Number of rows: " + fileContent.size());
-        } else {
-            System.out.println("Invalid content!");
-        }
+        Helper.printListList(excelToListList(filePath));
     }
 
     private static Workbook readExcel(String filePath) {
@@ -189,36 +167,17 @@ public class ExcelFileOperator {
 
             int numRecords = tableContent.size();
             int numSheets = 1;
-//            if (numRecords > 50000) {
-//                numSheets = (numRecords % 50000) == 0 ? (numRecords / 50000) : ((numRecords / 50000) + 1);
-//            }
             System.out.println("Start writing to excel file，num of records：" + numRecords + ", num of sheets：" + numSheets);
-
-//            int rowNums = 0;
-//            int listIndex = 0;
-//            for (int i = 0; i <= numSheets; i++) {
-//                Sheet sheet = wb.createSheet();
-//                sheet.setDefaultColumnWidth(16);
-//                if (i == numSheets) {
-//                    rowNums = numRecords - ((numSheets - 1) * 50000);
-//                    for (int j = 0; j < rowNums; j++) {
-//                        Row row = sheet.createRow(j);
-//                        row.createCell(0).setCellValue(tableContent.get(i).entrySet());
-//                    }
-//                } else {
-//                    for (int j = 0; j < 50000; j++) {
-//                        Row row = sheet.createRow(j);
-//                        row.createCell(0).setCellValue(tableContent.get(j + listIndex));
-//                    }
-//                }
-//                listIndex = listIndex + (i * 50000);
-//                System.out.println(i + "th sheet writing successfully...");
-//            }
 
             Sheet sheet = wb.createSheet();
             sheet.setDefaultColumnWidth(16);
             int currentRow = 0;
             for (Map<String, String> map : tableContent) {
+                if (currentRow == 250001) {
+                    System.out.println("Max length (250000) reached!");
+                    break;
+                }
+
                 int currentCol = 0;
                 Row row = sheet.createRow(currentRow);
                 for (Entry<String, String> entry : map.entrySet()) {
@@ -270,21 +229,25 @@ public class ExcelFileOperator {
             int rowNums = 0;
             int colNums = tableContent.get(0).size();
             int listIndex = 0;
-            for (int i = 0; i <= numSheets; i++) {
+            for (int currentSheet = 1; currentSheet <= numSheets; ++currentSheet) {
                 Sheet sheet = wb.createSheet();
                 sheet.setDefaultColumnWidth(16);
-                if (i == numSheets) {
+                if (currentSheet == numSheets) {
                     rowNums = numRecords - ((numSheets - 1) * 50000);
                     for (int currentRow = 0; currentRow < rowNums; ++currentRow) {
-                        fillCell(tableContent, colNums, sheet, currentRow);
+                        fillCellFromListList(tableContent, sheet, currentSheet, currentRow, colNums);
                     }
                 } else {
+                    if (currentSheet == 7) {
+                        System.out.println("Max length (299999) reached!");
+                        break;
+                    }
                     for (int currentRow = 0; currentRow < 50000; currentRow++) {
-                        fillCell(tableContent, colNums, sheet, currentRow);
+                        fillCellFromListList(tableContent, sheet, currentSheet, currentRow, colNums);
                     }
                 }
-                listIndex = listIndex + (i * 50000);
-                System.out.println(i + "th sheet writing successfully...");
+                listIndex = listIndex + (currentSheet * 50000);
+                System.out.println(currentSheet + "th sheet written successfully...");
             }
 
             wb.write(fileOut);
@@ -296,10 +259,10 @@ public class ExcelFileOperator {
         }
     }
 
-    private static void fillCell(List<ArrayList<String>> tableContent, int colNums, Sheet sheet, int currentRow) {
+    private static void fillCellFromListList(List<ArrayList<String>> tableContent, Sheet sheet, int currentSheet, int currentRow, int colNums) {
         Row row = sheet.createRow(currentRow);
-        for (int currentCol = 0; currentCol< colNums; ++currentCol){
-            String cellStringValue = tableContent.get(currentRow).get(currentCol);
+        for (int currentCol = 0; currentCol < colNums; ++currentCol) {
+            String cellStringValue = tableContent.get(currentRow + (currentSheet - 1) * 50000).get(currentCol);
             if (Helper.isInteger(cellStringValue)) {
                 row.createCell(currentCol).setCellValue(Integer.parseInt(cellStringValue));
             } else if (Helper.isDouble(cellStringValue)) {

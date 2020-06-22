@@ -29,7 +29,7 @@ public class Helper {
         return false;
     }
 
-    public static void printMapList(List<Map<String, String>> content){
+  public static void printMapList(List<Map<String, String>> content){
         if (content != null) {
             for (Map<String, String> map : content) {
                 for (Map.Entry<String, String> entry : map.entrySet()) {

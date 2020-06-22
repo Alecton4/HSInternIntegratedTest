@@ -15,7 +15,7 @@ import java.util.Map.Entry;
 
 public class ExcelFileOperator {
 
-    public static List<Map<String, String>> excelToList(String filePath) {
+    public static List<Map<String, String>> excelToMapList(String filePath) {
         Workbook wb = readExcel(filePath);
         Sheet sheet;
         Row row;
@@ -53,18 +53,43 @@ public class ExcelFileOperator {
         return fileContent;
     }
 
-    public static void printFile(List<Map<String, String>> fileContent) {
-        if (fileContent != null) {
-            for (Map<String, String> map : fileContent) {
-                for (Entry<String, String> entry : map.entrySet()) {
-                    System.out.print(entry.getKey() + ": " + entry.getValue() + ", ");
+    public static List<ArrayList<String>> excelToListList(String filePath) {
+        Workbook wb = readExcel(filePath);
+        Sheet sheet;
+        Row row;
+        List<ArrayList<String>> fileContent = null;
+
+        if (wb != null) {
+            fileContent = new ArrayList<ArrayList<String>>();
+            //obtain num of rows
+            sheet = wb.getSheetAt(0);
+            int numRow = sheet.getPhysicalNumberOfRows();
+            //obtain num of columns
+            row = sheet.getRow(0);
+            int numCol = row.getPhysicalNumberOfCells();
+
+            for (int i = 0; i < numRow; i++) {
+                ArrayList<String> strList = new ArrayList<String>();
+                row = sheet.getRow(i);
+                if (row != null) {
+                    for (int j = 0; j < numCol; j++) {
+                        strList.add(cellValueToString(row.getCell(j)));
+                    }
+                } else {
+                    break;
                 }
-                System.out.println();
+                fileContent.add(i, strList);
             }
-            System.out.println("Number of rows: " + fileContent.size());
-        } else {
-            System.out.println("Invalid content!");
         }
+        return fileContent;
+    }
+
+    public static void printExcelFromMapList(String filePath) {
+        Helper.printMapList(excelToMapList(filePath));
+    }
+
+    public static void printExcelFromListList(String filePath) {
+        Helper.printListList(excelToListList(filePath));
     }
 
     private static Workbook readExcel(String filePath) {
@@ -127,7 +152,7 @@ public class ExcelFileOperator {
         return cellValue;
     }
 
-    public static void exportExcel(List<Map<String, String>> tableContent, String filePath) {
+    public static void exportExcelFromMapList(List<Map<String, String>> tableContent, String filePath) {
         try {
             String extString = filePath.substring(filePath.lastIndexOf("."));
             Workbook wb = null;
@@ -148,6 +173,11 @@ public class ExcelFileOperator {
             sheet.setDefaultColumnWidth(16);
             int currentRow = 0;
             for (Map<String, String> map : tableContent) {
+                if (currentRow == 250001) {
+                    System.out.println("Max length (250000) reached!");
+                    break;
+                }
+
                 int currentCol = 0;
                 Row row = sheet.createRow(currentRow);
                 for (Entry<String, String> entry : map.entrySet()) {
@@ -173,6 +203,73 @@ public class ExcelFileOperator {
             System.out.println("Writing successful!");
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public static void exportExcelFromListList(List<ArrayList<String>> tableContent, String filePath) {
+        try {
+            String extString = filePath.substring(filePath.lastIndexOf("."));
+            Workbook wb = null;
+            if (".xls".equals(extString)) {
+                wb = new HSSFWorkbook();    //.xls
+            } else if (".xlsx".equals(extString)) {
+                wb = new XSSFWorkbook();    //.xlsx
+            } else {
+                throw new IOException("Unsupported file type!");
+            }
+            FileOutputStream fileOut = new FileOutputStream(filePath);
+
+            int numRecords = tableContent.size();
+            int numSheets = 1;
+            if (numRecords > 50000) {
+                numSheets = (numRecords % 50000) == 0 ? (numRecords / 50000) : ((numRecords / 50000) + 1);
+            }
+            System.out.println("Start writing to excel file，num of records：" + numRecords + ", num of sheets：" + numSheets);
+
+            int rowNums = 0;
+            int colNums = tableContent.get(0).size();
+            int listIndex = 0;
+            for (int currentSheet = 1; currentSheet <= numSheets; ++currentSheet) {
+                Sheet sheet = wb.createSheet();
+                sheet.setDefaultColumnWidth(16);
+                if (currentSheet == numSheets) {
+                    rowNums = numRecords - ((numSheets - 1) * 50000);
+                    for (int currentRow = 0; currentRow < rowNums; ++currentRow) {
+                        fillCellFromListList(tableContent, sheet, currentSheet, currentRow, colNums);
+                    }
+                } else {
+                    if (currentSheet == 7) {
+                        System.out.println("Max length (299999) reached!");
+                        break;
+                    }
+                    for (int currentRow = 0; currentRow < 50000; currentRow++) {
+                        fillCellFromListList(tableContent, sheet, currentSheet, currentRow, colNums);
+                    }
+                }
+                listIndex = listIndex + (currentSheet * 50000);
+                System.out.println(currentSheet + "th sheet written successfully...");
+            }
+
+            wb.write(fileOut);
+            fileOut.close();
+            wb.close();
+            System.out.println("Writing successful!");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void fillCellFromListList(List<ArrayList<String>> tableContent, Sheet sheet, int currentSheet, int currentRow, int colNums) {
+        Row row = sheet.createRow(currentRow);
+        for (int currentCol = 0; currentCol < colNums; ++currentCol) {
+            String cellStringValue = tableContent.get(currentRow + (currentSheet - 1) * 50000).get(currentCol);
+            if (Helper.isInteger(cellStringValue)) {
+                row.createCell(currentCol).setCellValue(Integer.parseInt(cellStringValue));
+            } else if (Helper.isDouble(cellStringValue)) {
+                row.createCell(currentCol).setCellValue(Double.parseDouble(cellStringValue));
+            } else {
+                row.createCell(currentCol).setCellValue(cellStringValue);
+            }
         }
     }
 
